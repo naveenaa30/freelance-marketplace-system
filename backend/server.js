@@ -2,8 +2,11 @@ require('dotenv').config();
 const http = require('http');
 const app = require('./src/app');
 const pool = require('./src/config/db');
+const initSockets = require('./src/sockets');
 
 const server = http.createServer(app);
+initSockets(server);
+
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, async () => {
