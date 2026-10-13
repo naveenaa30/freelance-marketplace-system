@@ -10,6 +10,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const recommendRoutes = require('./routes/recommendRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const lifecycleRoutes = require('./routes/lifecycleRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/recommendations', recommendRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api', lifecycleRoutes);
+app.use('/api', adminRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Freelance Marketplace API is running' });
