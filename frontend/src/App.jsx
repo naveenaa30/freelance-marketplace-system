@@ -9,6 +9,8 @@ import Profile from './pages/Profile';
 import PostProject from './pages/PostProject';
 import MyProjects from './pages/MyProjects';
 import BrowseProjects from './pages/BrowseProjects';
+import ProjectDetail from './pages/ProjectDetail';
+import MyBids from './pages/MyBids';
 
 const guard = (element, roles) => (
   <ProtectedRoute allowedRoles={roles}>{element}</ProtectedRoute>
@@ -27,6 +29,8 @@ function App() {
           <Route path="/post-project" element={guard(<PostProject />, ['client'])} />
           <Route path="/my-projects" element={guard(<MyProjects />, ['client'])} />
           <Route path="/browse" element={guard(<BrowseProjects />, ['freelancer'])} />
+          <Route path="/projects/:id" element={guard(<ProjectDetail />, ['client', 'freelancer'])} />
+          <Route path="/my-bids" element={guard(<MyBids />, ['freelancer'])} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
