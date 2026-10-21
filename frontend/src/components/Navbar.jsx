@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 
 const LINKS = {
   client: [['/', 'Dashboard'], ['/post-project', 'Post Project'], ['/my-projects', 'My Projects'], ['/chat', 'Chat'], ['/notifications', 'Notifications'], ['/profile', 'Profile']],
@@ -9,6 +10,7 @@ const LINKS = {
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { unread } = useSocket();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -23,7 +25,10 @@ export default function Navbar() {
         {user ? (
           <>
             {LINKS[user.role].map(([to, label]) => (
-              <Link key={to} to={to}>{label}</Link>
+              <Link key={to} to={to}>
+                {label}
+                {to === '/notifications' && unread > 0 && <span className="badge">{unread}</span>}
+              </Link>
             ))}
             <span style={{ marginLeft: 16 }}>{user.name} ({user.role})</span>
             <button onClick={handleLogout}>Logout</button>

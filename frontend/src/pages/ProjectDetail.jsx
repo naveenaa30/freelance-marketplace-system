@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import MilestonePanel from '../components/MilestonePanel';
+import ReviewPanel from '../components/ReviewPanel';
+import ReportButton from '../components/ReportButton';
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -17,6 +20,15 @@ export default function ProjectDetail() {
   const [loading, setLoading] = useState(true);
 
   const isOwner = user.role === 'client' && project?.client_id === user.id;
+  const isAssignedFreelancer =
+    user.role === 'freelancer' && project?.assigned_freelancer_id === user.id;
+  const showLifecycle =
+    project &&
+    ['assigned', 'in_progress', 'completed'].includes(project.status) &&
+    (isOwner || isAssignedFreelancer);
+  const reviewTarget = isOwner
+    ? { id: project?.assigned_freelancer_id, name: project?.assigned_freelancer_name }
+    : { id: project?.client_id, name: project?.client_name };
 
   useEffect(() => {
     const load = async () => {
@@ -92,6 +104,24 @@ export default function ProjectDetail() {
       {msg && <div className="success">{msg}</div>}
       {error && <div className="error">{error}</div>}
 
+      {showLifecycle && (
+        <MilestonePanel
+          projectId={project.id}
+          projectStatus={project.status}
+          isOwner={isOwner}
+          isAssignedFreelancer={isAssignedFreelancer}
+          onChanged={() => setTick((t) => t + 1)}
+        />
+      )}
+
+      {showLifecycle && project.status === 'completed' && (
+        <ReviewPanel
+          projectId={project.id}
+          otherUserId={reviewTarget.id}
+          otherUserName={reviewTarget.name}
+        />
+      )}
+
       {user.role === 'freelancer' && project.status === 'open' && (
         <div className="card">
           <h2 style={{ marginTop: 0 }}>Place a bid</h2>
@@ -107,7 +137,7 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      {user.role === 'freelancer' && project.status !== 'open' && (
+      {user.role === 'freelancer' && project.status !== 'open' && !isAssignedFreelancer && (
         <p className="muted">This project is no longer accepting bids.</p>
       )}
 
@@ -149,6 +179,12 @@ export default function ProjectDetail() {
             </div>
           ))}
         </>
+      )}
+            {(isOwner || isAssignedFreelancer) && project.status !== 'open' && (
+        <ReportButton
+          projectId={project.id}
+          reportedUserId={isOwner ? project.assigned_freelancer_id : project.client_id}
+        />
       )}
     </div>
   );

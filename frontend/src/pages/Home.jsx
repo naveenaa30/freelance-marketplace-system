@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import AdminDashboard from './admin/AdminDashboard';
 
 export default function Home() {
   const { user } = useAuth();
   const [stats, setStats] = useState({});
 
   useEffect(() => {
+    if (user.role === 'admin') return;
     const load = async () => {
       try {
         if (user.role === 'client') {
@@ -27,11 +29,13 @@ export default function Home() {
           });
         }
       } catch {
-        /* ignore for now */
+        /* ignore */
       }
     };
     load();
   }, [user.role]);
+
+  if (user.role === 'admin') return <AdminDashboard />;
 
   return (
     <div className="container">
