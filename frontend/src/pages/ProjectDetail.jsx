@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import MilestonePanel from '../components/MilestonePanel';
@@ -147,7 +147,10 @@ export default function ProjectDetail() {
           {recs.map((f) => (
             <div className="card" key={f.id}>
               <div className="row">
-                <h3>{f.name}{f.title && <span className="muted"> · {f.title}</span>}</h3>
+                <h3>
+                  <Link to={`/freelancers/${f.id}`}>{f.name}</Link>
+                  {f.title && <span className="muted"> · {f.title}</span>}
+                </h3>
                 <span className="tag">Score {f.score} · {f.matchPercent}% skill match</span>
               </div>
               <p className="muted">
@@ -165,7 +168,10 @@ export default function ProjectDetail() {
           {bids.map((b) => (
             <div className="card" key={b.id}>
               <div className="row">
-                <h3>{b.freelancer_name}{b.title && <span className="muted"> · {b.title}</span>}</h3>
+                <h3>
+                  <Link to={`/freelancers/${b.freelancer_id}`}>{b.freelancer_name}</Link>
+                  {b.title && <span className="muted"> · {b.title}</span>}
+                </h3>
                 <span className={`status ${b.status}`}>{b.status}</span>
               </div>
               <p>
@@ -180,7 +186,8 @@ export default function ProjectDetail() {
           ))}
         </>
       )}
-            {(isOwner || isAssignedFreelancer) && project.status !== 'open' && (
+
+      {(isOwner || isAssignedFreelancer) && project.status !== 'open' && (
         <ReportButton
           projectId={project.id}
           reportedUserId={isOwner ? project.assigned_freelancer_id : project.client_id}

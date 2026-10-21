@@ -12,10 +12,11 @@ const messageRoutes = require('./routes/messageRoutes');
 const lifecycleRoutes = require('./routes/lifecycleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const rateLimit = require('express-rate-limit');
+const portfolioRoutes = require('./routes/portfolioRoutes');
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
@@ -33,7 +34,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/recommendations', recommendRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api', lifecycleRoutes);
-app.use('/api', adminRoutes);
+app.app.use('/api/portfolio', portfolioRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Freelance Marketplace API is running' });

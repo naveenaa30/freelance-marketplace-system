@@ -1,3 +1,4 @@
+import PortfolioPanel from '../components/PortfolioPanel';
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
@@ -76,6 +77,7 @@ export default function Profile() {
           <button className="btn" type="submit">Save profile</button>
         </form>
       </div>
+            {isFreelancer && <PortfolioPanel />}
     </div>
   );
 }

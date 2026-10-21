@@ -19,6 +19,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminProjects from './pages/admin/AdminProjects';
 import AdminReports from './pages/admin/AdminReports';
 import Effects from './components/Effects';
+import FreelancerProfile from './pages/FreelancerProfile';
 
 const guard = (element, roles) => (
   <ProtectedRoute allowedRoles={roles}>{element}</ProtectedRoute>
@@ -44,9 +45,10 @@ function App() {
             <Route path="/assigned" element={guard(<MyWork />, ['freelancer'])} />
             <Route path="/chat" element={guard(<Chat />, ['client', 'freelancer'])} />
             <Route path="/notifications" element={guard(<Notifications />, ['client', 'freelancer'])} />
-                        <Route path="/admin/users" element={guard(<AdminUsers />, ['admin'])} />
+            <Route path="/admin/users" element={guard(<AdminUsers />, ['admin'])} />
             <Route path="/admin/projects" element={guard(<AdminProjects />, ['admin'])} />
             <Route path="/admin/reports" element={guard(<AdminReports />, ['admin'])} />
+            <Route path="/freelancers/:id" element={guard(<FreelancerProfile />, ['client', 'freelancer', 'admin'])} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
