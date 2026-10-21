@@ -100,12 +100,17 @@ exports.getMyProjects = async (req, res) => {
   }
 };
 
-// GET /api/projects/:id
+// GET /api/projects/:id   (now also returns the assigned freelancer)
 exports.getProject = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT p.*, u.name AS client_name
-       FROM projects p JOIN users u ON u.id = p.client_id
+      `SELECT p.*, u.name AS client_name,
+              ap.freelancer_id AS assigned_freelancer_id,
+              f.name AS assigned_freelancer_name
+       FROM projects p
+       JOIN users u ON u.id = p.client_id
+       LEFT JOIN assigned_projects ap ON ap.project_id = p.id
+       LEFT JOIN users f ON f.id = ap.freelancer_id
        WHERE p.id = ?`,
       [req.params.id]
     );
