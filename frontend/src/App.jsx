@@ -18,6 +18,7 @@ import Notifications from './pages/Notifications';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminProjects from './pages/admin/AdminProjects';
 import AdminReports from './pages/admin/AdminReports';
+import Effects from './components/Effects';
 
 const guard = (element, roles) => (
   <ProtectedRoute allowedRoles={roles}>{element}</ProtectedRoute>
@@ -28,6 +29,7 @@ function App() {
     <AuthProvider>
       <SocketProvider>
         <BrowserRouter>
+        <Effects/>
           <Navbar />
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -42,7 +44,7 @@ function App() {
             <Route path="/assigned" element={guard(<MyWork />, ['freelancer'])} />
             <Route path="/chat" element={guard(<Chat />, ['client', 'freelancer'])} />
             <Route path="/notifications" element={guard(<Notifications />, ['client', 'freelancer'])} />
-            <Route path="/admin/users" element={guard(<AdminUsers />, ['admin'])} />
+                        <Route path="/admin/users" element={guard(<AdminUsers />, ['admin'])} />
             <Route path="/admin/projects" element={guard(<AdminProjects />, ['admin'])} />
             <Route path="/admin/reports" element={guard(<AdminReports />, ['admin'])} />
             <Route path="*" element={<Navigate to="/" replace />} />

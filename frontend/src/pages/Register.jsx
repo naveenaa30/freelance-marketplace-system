@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AuthHero from '../components/AuthHero';
 
 export default function Register() {
   const { register } = useAuth();
@@ -23,6 +24,7 @@ export default function Register() {
 
   return (
     <div className="auth-box">
+            <AuthHero subtitle="Join the marketplace in under a minute." />
       <h2>Create Account</h2>
       {error && <div className="error">{error}</div>}
       <form onSubmit={handleSubmit}>

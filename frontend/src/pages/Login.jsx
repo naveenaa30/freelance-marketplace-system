@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AuthHero from '../components/AuthHero';
 
 export default function Login() {
   const { login } = useAuth();
@@ -22,6 +23,7 @@ export default function Login() {
 
   return (
     <div className="auth-box">
+            <AuthHero subtitle="Hire talent. Find work. Collaborate live." />
       <h2>Login</h2>
       {error && <div className="error">{error}</div>}
       <form onSubmit={handleSubmit}>
