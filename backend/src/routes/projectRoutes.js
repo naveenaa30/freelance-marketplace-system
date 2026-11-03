@@ -3,12 +3,13 @@ const {
   createProject, getProjects, getMyProjects, getProject, updateProject, deleteProject
 } = require('../controllers/projectController');
 const { protect, allowRoles } = require('../middleware/auth');
+const { projectRules } = require('../middleware/validate');
 
-router.post('/', protect, allowRoles('client'), createProject);
+router.post('/', protect, allowRoles('client'), projectRules, createProject);
 router.get('/', protect, getProjects);
 router.get('/my', protect, allowRoles('client'), getMyProjects);   // must be before /:id
 router.get('/:id', protect, getProject);
-router.put('/:id', protect, allowRoles('client'), updateProject);
+router.put('/:id', protect, allowRoles('client'), projectRules, updateProject);
 router.delete('/:id', protect, allowRoles('client'), deleteProject);
 
 module.exports = router;

@@ -85,3 +85,24 @@ exports.me = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+// PUT /api/auth/password   body: { currentPassword, newPassword }
+exports.changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  try {
+    const [rows] = await pool.query('SELECT password FROM users WHERE id = ?', [req.user.id]);
+    if (!rows.length) return res.status(404).json({ message: 'User not found' });
+
+    const ok = await bcrypt.compare(currentPassword, rows[0].password);
+    if (!ok) return res.status(400).json({ message: 'Current password is incorrect' });
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ message: 'New password must be different from the current one' });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashed, req.user.id]);
+    res.json({ message: 'Password changed' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

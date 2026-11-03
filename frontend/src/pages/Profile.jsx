@@ -1,8 +1,9 @@
-import PortfolioPanel from '../components/PortfolioPanel';
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import SkillPicker from '../components/SkillPicker';
+import PortfolioPanel from '../components/PortfolioPanel';
+import ChangePassword from '../components/ChangePassword';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -77,7 +78,9 @@ export default function Profile() {
           <button className="btn" type="submit">Save profile</button>
         </form>
       </div>
-            {isFreelancer && <PortfolioPanel />}
+
+      {isFreelancer && <PortfolioPanel />}
+      <ChangePassword />
     </div>
   );
 }

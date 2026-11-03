@@ -151,7 +151,7 @@ export default function ProjectDetail() {
                   <Link to={`/freelancers/${f.id}`}>{f.name}</Link>
                   {f.title && <span className="muted"> · {f.title}</span>}
                 </h3>
-                <span className="tag">Score {f.score} · {f.matchPercent}% skill match</span>
+                <span className="tag">Score {f.score} · {f.matchPercent}% skills · {f.textPercent}% text match</span>
               </div>
               <p className="muted">
                 Rating {Number(f.avg_rating).toFixed(1)} / 5 · {f.experience_years} yrs experience · {f.completed_projects} projects completed

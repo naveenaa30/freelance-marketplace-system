@@ -47,7 +47,7 @@ export default function BrowseProjects() {
             <div className="card" key={p.id}>
               <div className="row">
                 <h3><Link to={`/projects/${p.id}`}>{p.title}</Link></h3>
-                <span className="tag">{p.matchPercent}% skill match</span>
+                <span className="tag">{p.matchPercent}% skills · {p.textPercent}% text match</span>
               </div>
               <p className="muted">Budget: ${p.budget} · Client: {p.client_name}</p>
             </div>
