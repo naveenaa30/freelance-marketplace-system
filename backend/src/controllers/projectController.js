@@ -42,15 +42,15 @@ exports.createProject = async (req, res) => {
   }
 };
 
-// GET /api/projects?skill=1&minBudget=100&search=react&status=open
+// GET /api/projects?skill=1&minBudget=100&search=react&status=open&sort=newest&page=1&limit=6
 exports.getProjects = async (req, res) => {
   try {
-    const { skill, minBudget, search, status } = req.query;
-    const where = [];
-    const params = [];
+    const { skill, minBudget, search, status, sort } = req.query;
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 6, 1), 50);
 
-    where.push('p.status = ?');
-    params.push(status || 'open');
+    const where = ['p.status = ?'];
+    const params = [status || 'open'];
 
     if (minBudget) {
       where.push('p.budget >= ?');
@@ -65,16 +65,38 @@ exports.getProjects = async (req, res) => {
       params.push(Number(skill));
     }
 
+    // whitelist: the sort value picks one of these fixed strings, it is never pasted into SQL
+    const ORDER = {
+      newest: 'p.created_at DESC, p.id DESC',
+      budget_high: 'p.budget DESC, p.id DESC',
+      budget_low: 'p.budget ASC, p.id DESC',
+      deadline: 'p.deadline IS NULL, p.deadline ASC, p.id DESC'
+    };
+    const orderBy = ORDER[sort] || ORDER.newest;
+    const whereSql = where.join(' AND ');
+
+    const [[{ total }]] = await pool.query(
+      `SELECT COUNT(*) AS total FROM projects p WHERE ${whereSql}`,
+      params
+    );
+
     const [rows] = await pool.query(
       `SELECT p.id, p.title, p.description, p.budget, p.deadline, p.status,
               p.created_at, u.name AS client_name, ${SKILLS_SUBQUERY}
        FROM projects p
        JOIN users u ON u.id = p.client_id
-       WHERE ${where.join(' AND ')}
-       ORDER BY p.created_at DESC`,
-      params
+       WHERE ${whereSql}
+       ORDER BY ${orderBy}
+       LIMIT ? OFFSET ?`,
+      [...params, limit, (page - 1) * limit]
     );
-    res.json({ projects: rows });
+
+    res.json({
+      projects: rows,
+      total,
+      page,
+      pages: Math.max(Math.ceil(total / limit), 1)
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -100,7 +122,7 @@ exports.getMyProjects = async (req, res) => {
   }
 };
 
-// GET /api/projects/:id   (now also returns the assigned freelancer)
+// GET /api/projects/:id   (also returns the assigned freelancer)
 exports.getProject = async (req, res) => {
   try {
     const [rows] = await pool.query(

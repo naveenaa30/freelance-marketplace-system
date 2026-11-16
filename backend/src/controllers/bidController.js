@@ -39,7 +39,7 @@ exports.submitBid = async (req, res) => {
   }
 };
 
-// GET /api/projects/:id/bids   (project owner only)
+// GET /api/projects/:id/bids   (project owner only) - each bid gets a score
 exports.getProjectBids = async (req, res) => {
   try {
     const [owned] = await pool.query(
@@ -59,7 +59,24 @@ exports.getProjectBids = async (req, res) => {
        ORDER BY b.created_at DESC`,
       [req.params.id]
     );
-    res.json({ bids });
+    if (!bids.length) return res.json({ bids: [] });
+
+    // min-max normalisation: cheapest / fastest bid gets 1, most expensive / slowest gets 0
+    const amounts = bids.map((b) => Number(b.amount));
+    const days = bids.map((b) => Number(b.delivery_days));
+    const minA = Math.min(...amounts), maxA = Math.max(...amounts);
+    const minD = Math.min(...days), maxD = Math.max(...days);
+    const lowerIsBetter = (v, lo, hi) => (hi === lo ? 1 : (hi - v) / (hi - lo));
+
+    const scored = bids.map((b) => {
+      const priceScore = lowerIsBetter(Number(b.amount), minA, maxA);
+      const speedScore = lowerIsBetter(Number(b.delivery_days), minD, maxD);
+      const ratingScore = Number(b.avg_rating || 0) / 5;
+      const score = 0.4 * priceScore + 0.35 * ratingScore + 0.25 * speedScore;
+      return { ...b, score: Number(score.toFixed(3)) };
+    });
+
+    res.json({ bids: scored });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -129,7 +146,7 @@ exports.acceptBid = async (req, res) => {
 
     // tell the other bidders
     const [others] = await conn.query(
-      "SELECT freelancer_id FROM bids WHERE project_id = ? AND id <> ?",
+      'SELECT freelancer_id FROM bids WHERE project_id = ? AND id <> ?',
       [bid.project_id, bid.id]
     );
     for (const o of others) {
@@ -144,5 +161,45 @@ exports.acceptBid = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   } finally {
     conn.release();
+  }
+};
+
+const median = (list) => {
+  const s = [...list].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+};
+
+// GET /api/projects/:id/bid-suggestion   (freelancer)
+// market prices: bids on OTHER projects that share at least one skill with this one
+exports.getBidSuggestion = async (req, res) => {
+  try {
+    const [[project]] = await pool.query('SELECT budget FROM projects WHERE id = ?', [req.params.id]);
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    const [rows] = await pool.query(
+      `SELECT DISTINCT b.id, b.amount
+       FROM bids b
+       JOIN project_skills ps ON ps.project_id = b.project_id
+       WHERE b.project_id <> ?
+         AND ps.skill_id IN (SELECT skill_id FROM project_skills WHERE project_id = ?)`,
+      [req.params.id, req.params.id]
+    );
+
+    const amounts = rows.map((r) => Number(r.amount));
+    const round = (n) => Math.round(n * 100) / 100;
+    const base = { budget: Number(project.budget), count: amounts.length, enough: amounts.length >= 3 };
+
+    if (!amounts.length) return res.json(base);
+    res.json({
+      ...base,
+      average: round(amounts.reduce((s, v) => s + v, 0) / amounts.length),
+      median: round(median(amounts)),
+      min: Math.min(...amounts),
+      max: Math.max(...amounts)
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
   }
 };

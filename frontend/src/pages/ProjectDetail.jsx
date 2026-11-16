@@ -13,6 +13,8 @@ export default function ProjectDetail() {
   const [skills, setSkills] = useState([]);
   const [bids, setBids] = useState([]);
   const [recs, setRecs] = useState([]);
+  const [suggestion, setSuggestion] = useState(null);
+  const [bidSort, setBidSort] = useState('smart');
   const [bidForm, setBidForm] = useState({ amount: '', delivery_days: '', proposal: '' });
   const [tick, setTick] = useState(0);
   const [msg, setMsg] = useState('');
@@ -54,6 +56,14 @@ export default function ProjectDetail() {
     load();
   }, [id, user.id, user.role, tick]);
 
+  // price guide for freelancers, only while the project is open
+  useEffect(() => {
+    if (user.role !== 'freelancer' || project?.status !== 'open') return;
+    api.get(`/projects/${id}/bid-suggestion`)
+      .then((res) => setSuggestion(res.data))
+      .catch(() => setSuggestion(null));
+  }, [id, user.role, project?.status]);
+
   const handleBidChange = (e) => setBidForm({ ...bidForm, [e.target.name]: e.target.value });
 
   const submitBid = async (e) => {
@@ -81,6 +91,15 @@ export default function ProjectDetail() {
       setError(err.response?.data?.message || 'Could not accept bid');
     }
   };
+
+  // sort the bids the client sees
+  const sortedBids = [...bids].sort((a, b) => {
+    if (bidSort === 'price') return Number(a.amount) - Number(b.amount);
+    if (bidSort === 'speed') return a.delivery_days - b.delivery_days;
+    if (bidSort === 'rating') return Number(b.avg_rating || 0) - Number(a.avg_rating || 0);
+    return b.score - a.score;
+  });
+  const bestId = bids.length > 1 ? [...bids].sort((a, b) => b.score - a.score)[0].id : null;
 
   if (loading) return <div className="container"><p className="muted">Loading...</p></div>;
   if (!project) return <div className="container"><p className="error">Project not found.</p></div>;
@@ -120,6 +139,30 @@ export default function ProjectDetail() {
           otherUserId={reviewTarget.id}
           otherUserName={reviewTarget.name}
         />
+      )}
+
+      {user.role === 'freelancer' && project.status === 'open' && suggestion && (
+        <div className="card">
+          <h3>Price guide</h3>
+          {suggestion.enough ? (
+            <p>
+              Based on {suggestion.count} bids on similar projects: average <b>${suggestion.average}</b>,
+              median <b>${suggestion.median}</b>, range ${suggestion.min} to ${suggestion.max}.
+            </p>
+          ) : (
+            <p className="muted">Not enough similar bids yet ({suggestion.count}) for a market price.</p>
+          )}
+          <p className="muted">The client's budget for this project is ${suggestion.budget}.</p>
+          {suggestion.enough && (
+            <button
+              type="button"
+              className="btn small"
+              onClick={() => setBidForm({ ...bidForm, amount: String(Math.round(suggestion.median)) })}
+            >
+              Use median price
+            </button>
+          )}
+        </div>
       )}
 
       {user.role === 'freelancer' && project.status === 'open' && (
@@ -163,16 +206,32 @@ export default function ProjectDetail() {
 
       {isOwner && (
         <>
-          <h2>Bids ({bids.length})</h2>
+          <div className="row">
+            <h2>Bids ({bids.length})</h2>
+            {bids.length > 1 && (
+              <div style={{ minWidth: 200 }}>
+                <select value={bidSort} onChange={(e) => setBidSort(e.target.value)}>
+                  <option value="smart">Sort: Best overall</option>
+                  <option value="price">Sort: Lowest price</option>
+                  <option value="speed">Sort: Fastest delivery</option>
+                  <option value="rating">Sort: Highest rating</option>
+                </select>
+              </div>
+            )}
+          </div>
           {bids.length === 0 && <p className="muted">No bids yet.</p>}
-          {bids.map((b) => (
+          {sortedBids.map((b) => (
             <div className="card" key={b.id}>
               <div className="row">
                 <h3>
                   <Link to={`/freelancers/${b.freelancer_id}`}>{b.freelancer_name}</Link>
                   {b.title && <span className="muted"> · {b.title}</span>}
                 </h3>
-                <span className={`status ${b.status}`}>{b.status}</span>
+                <span>
+                  {b.id === bestId && <span className="tag">Best value</span>}
+                  <span className="tag">Score {Math.round(b.score * 100)}</span>{' '}
+                  <span className={`status ${b.status}`}>{b.status}</span>
+                </span>
               </div>
               <p>
                 <b>${b.amount}</b> · {b.delivery_days} days
