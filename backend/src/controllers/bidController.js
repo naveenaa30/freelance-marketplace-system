@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { notify } = require('../services/notify');
+const { sendToUser } = require('../services/mailer');
 
 // POST /api/projects/:id/bids
 exports.submitBid = async (req, res) => {
@@ -153,7 +154,14 @@ exports.acceptBid = async (req, res) => {
       await notify(o.freelancer_id, `Your bid on "${bid.title}" was not selected`, conn);
     }
 
-    await conn.commit();
+        await conn.commit();
+
+    // emails go out only after the transaction has succeeded
+    sendToUser(bid.freelancer_id, 'Your bid was accepted', `Your bid on "${bid.title}" was accepted!`).catch(() => {});
+    for (const o of others) {
+      sendToUser(o.freelancer_id, 'Bid update', `Your bid on "${bid.title}" was not selected.`).catch(() => {});
+    }
+
     res.json({ message: 'Bid accepted and project assigned' });
   } catch (err) {
     await conn.rollback();

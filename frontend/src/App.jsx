@@ -21,6 +21,7 @@ import FreelancerProfile from './pages/FreelancerProfile';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminProjects from './pages/admin/AdminProjects';
 import AdminReports from './pages/admin/AdminReports';
+import Wallet from './pages/Wallet';
 
 const guard = (element, roles) => (
   <ProtectedRoute allowedRoles={roles}>{element}</ProtectedRoute>
@@ -51,6 +52,7 @@ function App() {
             <Route path="/admin/users" element={guard(<AdminUsers />, ['admin'])} />
             <Route path="/admin/projects" element={guard(<AdminProjects />, ['admin'])} />
             <Route path="/admin/reports" element={guard(<AdminReports />, ['admin'])} />
+                        <Route path="/wallet" element={guard(<Wallet />, ['client', 'freelancer'])} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

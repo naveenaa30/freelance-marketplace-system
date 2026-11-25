@@ -3,8 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 
 const LINKS = {
-  client: [['/', 'Dashboard'], ['/post-project', 'Post Project'], ['/my-projects', 'My Projects'], ['/chat', 'Chat'], ['/notifications', 'Notifications'], ['/profile', 'Profile']],
-  freelancer: [['/', 'Dashboard'], ['/browse', 'Browse Projects'], ['/my-bids', 'My Bids'], ['/assigned', 'My Work'], ['/chat', 'Chat'], ['/notifications', 'Notifications'], ['/profile', 'Profile']],
+  client: [['/', 'Dashboard'], ['/post-project', 'Post Project'], ['/my-projects', 'My Projects'], ['/wallet', 'Wallet'], ['/chat', 'Chat'], ['/notifications', 'Notifications'], ['/profile', 'Profile']],
+  freelancer: [['/', 'Dashboard'], ['/browse', 'Browse Projects'], ['/my-bids', 'My Bids'], ['/assigned', 'My Work'], ['/wallet', 'Wallet'], ['/chat', 'Chat'], ['/notifications', 'Notifications'], ['/profile', 'Profile']],
   admin: [['/', 'Dashboard'], ['/admin/users', 'Users'], ['/admin/projects', 'Projects'], ['/admin/reports', 'Reports']]
 };
 

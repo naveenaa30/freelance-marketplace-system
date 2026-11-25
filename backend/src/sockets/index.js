@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { setIO } = require('./io');
 const { canChat } = require('../services/chatAccess');
+const { sendToUser } = require('../services/mailer');
 
 module.exports = (server) => {
   const io = new Server(server, {
@@ -57,7 +58,22 @@ module.exports = (server) => {
           created_at: new Date()
         };
 
-        io.to(`user_${receiverId}`).emit('new_message', message);
+        const room = `user_${receiverId}`;
+        io.to(room).emit('new_message', message);
+
+        // receiver has no open connection: send an email instead
+        io.in(room).fetchSockets()
+          .then((online) => {
+            if (!online.length) {
+              sendToUser(
+                receiverId,
+                `New message from ${sender.name}`,
+                `${sender.name} sent you a message: "${content.slice(0, 120)}"`
+              ).catch(() => {});
+            }
+          })
+          .catch(() => {});
+
         reply({ ok: true, message });
       } catch (err) {
         console.error(err);

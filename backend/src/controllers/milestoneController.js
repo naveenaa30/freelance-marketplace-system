@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { notify } = require('../services/notify');
 const { getProjectAccess } = require('../services/projectAccess');
+const { releasePayment } = require('../services/wallet');
 
 // recalculate progress and project status from milestones
 async function refreshProgress(projectId) {
@@ -47,7 +48,9 @@ exports.addMilestone = async (req, res) => {
     const progress = await refreshProgress(req.params.id);
 
     if (access.freelancerId) {
-      await notify(access.freelancerId, `New milestone "${title}" on "${access.project.title}"`);
+      await notify(access.freelancerId, `New milestone "${title}" on "${access.project.title}"`, pool, {
+        subject: 'New milestone'
+      });
     }
     res.status(201).json({ message: 'Milestone added', milestoneId: result.insertId, progress });
   } catch (err) {
@@ -102,7 +105,9 @@ exports.updateMilestone = async (req, res) => {
 
     await notify(
       access.project.client_id,
-      `Milestone "${milestone.title}" is now ${status.replace('_', ' ')} (${progress}% done)`
+      `Milestone "${milestone.title}" is now ${status.replace('_', ' ')} (${progress}% done)`,
+      pool,
+      { subject: 'Milestone update' }
     );
     res.json({ message: 'Milestone updated', progress });
   } catch (err) {
@@ -140,8 +145,24 @@ exports.completeProject = async (req, res) => {
        WHERE user_id = ?`,
       [access.freelancerId, access.freelancerId]
     );
-    await notify(access.freelancerId, `"${access.project.title}" was marked as completed`);
-    res.json({ message: 'Project completed' });
+
+    // release escrow (does nothing if the project was never funded)
+    let released = null;
+    try {
+      released = await releasePayment(req.params.id);
+    } catch (err) {
+      console.error('Escrow release failed:', err);
+    }
+
+    await notify(
+      access.freelancerId,
+      released
+        ? `"${access.project.title}" was completed and $${released.amount.toFixed(2)} was released to your wallet`
+        : `"${access.project.title}" was marked as completed`,
+      pool,
+      { subject: 'Project completed' }
+    );
+    res.json({ message: 'Project completed', paymentReleased: Boolean(released) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

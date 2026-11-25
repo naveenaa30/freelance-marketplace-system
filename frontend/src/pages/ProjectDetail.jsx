@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import MilestonePanel from '../components/MilestonePanel';
 import ReviewPanel from '../components/ReviewPanel';
 import ReportButton from '../components/ReportButton';
+import PaymentPanel from '../components/PaymentPanel';
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -132,7 +133,13 @@ export default function ProjectDetail() {
           onChanged={() => setTick((t) => t + 1)}
         />
       )}
-
+            {showLifecycle && (
+        <PaymentPanel
+          projectId={project.id}
+          projectStatus={project.status}
+          isOwner={isOwner}
+        />
+      )}
       {showLifecycle && project.status === 'completed' && (
         <ReviewPanel
           projectId={project.id}
